@@ -6,6 +6,15 @@ export enum Phase {
   COMPLETED = 'COMPLETED'
 }
 
+// Numeric ordering for phase comparisons
+export const PHASE_ORDER: Record<Phase, number> = {
+  [Phase.REGISTRATION]: 0,
+  [Phase.CHAMPIONSHIP]: 1,
+  [Phase.SEMI_FINALS]: 2,
+  [Phase.FINALS]: 3,
+  [Phase.COMPLETED]: 4,
+};
+
 export interface Player {
   id: string;
   firstName: string;
@@ -43,6 +52,12 @@ export interface TournamentState {
   };
   finalRaces: Race[];
 }
+
+// Discriminated union for race context — replaces boolean flags
+export type RaceContext =
+  | { type: 'championship' }
+  | { type: 'semi'; sessionId: 'session1' | 'session2' }
+  | { type: 'final' };
 
 export const POINTS_SYSTEM = [15, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
