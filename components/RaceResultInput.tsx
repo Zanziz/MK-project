@@ -11,7 +11,6 @@ interface RaceResultInputProps {
 
 export const RaceResultInput: React.FC<RaceResultInputProps> = ({ race, players, onSave, onCancel }) => {
   const [inputs, setInputs] = useState<Record<string, string>>(() => {
-    // Initialize with existing results if any
     const initial: Record<string, string> = {};
     race.playerIds.forEach(pid => {
       initial[pid] = race.results[pid] ? race.results[pid].toString() : '';
@@ -39,6 +38,14 @@ export const RaceResultInput: React.FC<RaceResultInputProps> = ({ race, players,
       return;
     }
 
+    // Check for duplicate positions
+    const positionValues = Object.values(finalResults);
+    const uniquePositions = new Set(positionValues);
+    if (uniquePositions.size !== positionValues.length) {
+      alert("Two players cannot finish in the same position. Please check your entries.");
+      return;
+    }
+
     onSave(race.id, finalResults);
   };
 
@@ -62,14 +69,14 @@ export const RaceResultInput: React.FC<RaceResultInputProps> = ({ race, players,
                     min="1"
                     max="24"
                     value={inputs[pid] || ''}
-                    onChange={(e) => setInputs({...inputs, [pid]: e.target.value})}
+                    onChange={(e) => setInputs({ ...inputs, [pid]: e.target.value })}
                     className="w-16 p-2 bg-gray-900 border border-gray-600 rounded text-center text-white focus:border-yellow-400 focus:outline-none"
                     placeholder="-"
                   />
                   {inputs[pid] && (
-                     <span className="text-xs text-yellow-500 font-bold w-12 text-right">
-                       +{POINTS_SYSTEM[Math.max(0, parseInt(inputs[pid]) - 1)] || 0} pts
-                     </span>
+                    <span className="text-xs text-yellow-500 font-bold w-12 text-right">
+                      +{POINTS_SYSTEM[Math.max(0, parseInt(inputs[pid]) - 1)] || 0} pts
+                    </span>
                   )}
                 </div>
               </div>

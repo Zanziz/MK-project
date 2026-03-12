@@ -1,5 +1,15 @@
 import { Player, Race } from '../types';
 
+/** Fisher-Yates shuffle — produces a uniform random permutation */
+const shuffleArray = <T>(arr: T[]): T[] => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
 /**
  * Generates a schedule where each player plays exactly 3 races.
  * Races are groups of 4.
@@ -13,12 +23,12 @@ export const generateChampionshipSchedule = (players: Player[]): Race[] => {
   const raceCount = Math.ceil(totalSlots / 4);
 
   const MAX_RETRIES = 100;
-  
+
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const schedule = attemptScheduleGeneration(players, raceCount);
       return schedule;
-    } catch (e) {
+    } catch {
       // Continue retrying
     }
   }
@@ -31,35 +41,26 @@ const attemptScheduleGeneration = (players: Player[], raceCount: number, looseMo
   // Create a pool of player IDs, each appearing 3 times
   let pool: string[] = [];
   players.forEach(p => {
-    pool.push(p.id);
-    pool.push(p.id);
-    pool.push(p.id);
+    pool.push(p.id, p.id, p.id);
   });
 
-  // Shuffle the pool
-  pool = pool.sort(() => Math.random() - 0.5);
+  // Shuffle the pool using Fisher-Yates
+  pool = shuffleArray(pool);
 
   const races: Race[] = [];
 
   for (let i = 0; i < raceCount; i++) {
     const raceId = `gp-${i + 1}`;
     const racePlayers: string[] = [];
-    
-    // Try to fill the race with 4 players
-    // In the last race, we might have fewer if math doesn't align perfectly, 
-    // but the prompt formula assumes divisibility ideally. 
-    // We will just take up to 4 from the pool.
+
     const slotCount = Math.min(4, pool.length);
 
     for (let k = 0; k < slotCount; k++) {
-      // Find a player in the pool that isn't already in this race
       const candidateIndex = pool.findIndex(pid => !racePlayers.includes(pid));
-      
+
       if (candidateIndex === -1) {
         if (!looseMode) throw new Error("Collision detected");
-        // In loose mode, we just take the first available even if duplicate (shouldn't happen with 3 entries logic often)
-        const forcedPid = pool[0];
-        racePlayers.push(forcedPid);
+        racePlayers.push(pool[0]);
         pool.splice(0, 1);
       } else {
         racePlayers.push(pool[candidateIndex]);
@@ -82,15 +83,25 @@ const attemptScheduleGeneration = (players: Player[], raceCount: number, looseMo
 /**
  * Sorts players for the semi-final seeding.
  * Returns top 8 players.
+ * Tie-breaker: compare sorted position arrays element by element (F1-style).
  */
 export const getQualifiers = (players: Player[]): Player[] => {
   return [...players]
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      // Tie-breaker: Best single position
-      const minPosA = Math.min(...(a.positions.length ? a.positions : [99]));
-      const minPosB = Math.min(...(b.positions.length ? b.positions : [99]));
-      return minPosA - minPosB;
+
+      // Count occurrences of each finishing position, best first
+      const sortedA = [...a.positions].sort((x, y) => x - y);
+      const sortedB = [...b.positions].sort((x, y) => x - y);
+
+      const len = Math.max(sortedA.length, sortedB.length);
+      for (let i = 0; i < len; i++) {
+        const posA = sortedA[i] ?? 99;
+        const posB = sortedB[i] ?? 99;
+        if (posA !== posB) return posA - posB; // lower position = better
+      }
+
+      return 0;
     })
     .slice(0, 8);
 };
