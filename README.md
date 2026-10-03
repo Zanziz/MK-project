@@ -2,6 +2,8 @@
 
 Run an office Mario Kart tournament from a laptop: register racers, play the championship, the semi-finals and the grand final. Everything is saved in the browser, no backend needed.
 
+A fun little side project born from office Mario Kart rivalries 🏆 Feel free to use it, fork it and make it yours.
+
 ## Format
 
 1. **Registration**: 4 to 50 racers. Paste a whole list at once (`First name, Gamer tag` per line) or import a CSV file; the gamer tag is optional.
@@ -51,3 +53,11 @@ src/
 ```
 
 Stack: React 19, TypeScript, Vite, Tailwind CSS 4, Vitest, lucide-react.
+
+## License
+
+[MIT](LICENSE): use it, fork it, change it, run your own cup.
+
+## Disclaimer
+
+Unofficial fan project, not affiliated with, endorsed or sponsored by Nintendo. Mario Kart is a trademark of Nintendo.
