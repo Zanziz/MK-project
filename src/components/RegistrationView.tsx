@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
-import { ClipboardList, Trash2, UserPlus } from 'lucide-react';
-import { createPlayer, parseRacerList, registrationError, toDraft } from '../domain/registration';
+import { ClipboardList, Trash2, Upload, UserPlus } from 'lucide-react';
+import { createPlayer, dropCsvHeader, parseRacerList, registrationError, toDraft } from '../domain/registration';
 import {
   FINALISTS,
   MAX_PLAYERS,
@@ -101,7 +101,7 @@ const AddRacerCard = ({ players, onAddPlayers }: AddRacerCardProps) => {
         <Button variant="ghost" size="sm" onClick={() => setMode(mode === 'single' ? 'list' : 'single')}>
           {mode === 'single' ? (
             <>
-              <ClipboardList size={16} aria-hidden="true" /> Paste a list
+              <ClipboardList size={16} aria-hidden="true" /> Paste or import
             </>
           ) : (
             <>
@@ -201,9 +201,18 @@ const SingleRacerForm = ({ players, onAddPlayers }: AddRacerCardProps) => {
 const RacerListForm = ({ players, onAddPlayers }: AddRacerCardProps) => {
   const id = useId();
   const isFull = players.length >= MAX_PLAYERS;
+  const fileInput = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   // Lines beyond the player cap come back in `rejected`, like duplicates.
   const preview = parseRacerList(text, players);
+
+  // A CSV file lands in the text area, so its racers get the same preview before being added.
+  const importFile = async (file: File | undefined) => {
+    if (!file) return;
+    const racers = dropCsvHeader(await file.text()).trim();
+    setText(current => [current.trim(), racers].filter(Boolean).join('\n'));
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -214,16 +223,47 @@ const RacerListForm = ({ players, onAddPlayers }: AddRacerCardProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <label htmlFor={`${id}-list`} className="block text-sm text-gray-300">
-        One racer per line: <code className="text-yellow-300">First name, Gamer tag</code>
-      </label>
+      <div className="flex items-end justify-between gap-2">
+        <label htmlFor={`${id}-list`} className="block text-sm text-gray-300">
+          One racer per line: <code className="text-yellow-300">First name, Gamer tag</code>
+        </label>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0 whitespace-nowrap"
+          onClick={() => fileInput.current?.click()}
+          disabled={isFull}
+        >
+          <Upload size={16} aria-hidden="true" /> CSV file
+        </Button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept=".csv,.txt,text/csv,text/plain"
+          className="hidden"
+          onChange={e => {
+            void importFile(e.target.files?.[0]);
+            e.target.value = '';
+          }}
+        />
+      </div>
       <textarea
         id={`${id}-list`}
         value={text}
         onChange={e => setText(e.target.value)}
+        onDragOver={e => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={e => {
+          e.preventDefault();
+          setIsDragging(false);
+          void importFile(e.dataTransfer.files[0]);
+        }}
         rows={7}
-        className={`${inputClass} font-mono text-sm`}
-        placeholder={'Alice, Turbo\nBob, Nitro\nCarol'}
+        className={`${inputClass} font-mono text-sm ${isDragging ? 'border-yellow-400 bg-yellow-400/10' : ''}`}
+        placeholder={'Alice, Turbo\nBob, Nitro\nCarol\n\n…or drop a CSV file here'}
         autoFocus
         disabled={isFull}
       />

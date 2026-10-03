@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createPlayer, parseRacerList, registrationError, toDraft } from './registration';
+import { createPlayer, dropCsvHeader, parseRacerList, registrationError, toDraft } from './registration';
 
 describe('registration', () => {
   it('trims names and defaults the gamer tag to the first name', () => {
@@ -16,6 +16,13 @@ describe('registration', () => {
     const ids = new Set(Array.from({ length: 100 }, () => createPlayer(toDraft('A', '')).id));
     expect(ids.size).toBe(100);
     expect([...ids].every(id => /^[0-9a-f]{32}$/.test(id))).toBe(true);
+  });
+
+  it('drops a CSV header and ignores # comments', () => {
+    expect(dropCsvHeader('Prénom,GamerTag\nMario,Speed')).toBe('Mario,Speed');
+    expect(dropCsvHeader('first_name;tag\r\nMario;Speed')).toBe('Mario;Speed');
+    expect(dropCsvHeader('Mario,Speed\nLuigi,Green')).toBe('Mario,Speed\nLuigi,Green');
+    expect(parseRacerList('# racers\nMario, Speed', []).accepted).toEqual([{ firstName: 'Mario', gamerTag: 'Speed' }]);
   });
 
   it('parses a pasted list and reports skipped lines', () => {

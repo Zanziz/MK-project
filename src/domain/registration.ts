@@ -23,7 +23,10 @@ export const registrationError = (existing: Pick<Player, 'gamerTag'>[], draft: P
   return null;
 };
 
-/** Parses one racer per line: `First name, Gamer tag` (the tag is optional; tabs and semicolons also work). */
+/**
+ * Parses one racer per line: `First name, Gamer tag` (the tag is optional; tabs and semicolons also work).
+ * Blank lines and `#` comments are ignored.
+ */
 export const parseRacerList = (
   text: string,
   existing: Pick<Player, 'gamerTag'>[],
@@ -32,7 +35,7 @@ export const parseRacerList = (
   const rejected: { line: string; reason: string }[] = [];
 
   for (const line of text.split(/\r?\n/)) {
-    if (!line.trim()) continue;
+    if (!line.trim() || line.trim().startsWith('#')) continue;
     const [firstName = '', gamerTag = ''] = line.split(/[,;\t]/);
     const draft = toDraft(firstName, gamerTag);
     const reason = registrationError([...existing, ...accepted], draft);
@@ -41,6 +44,14 @@ export const parseRacerList = (
   }
 
   return { accepted, rejected };
+};
+
+const HEADER_WORDS = /\b(first|name|pr[ée]nom|tag)\b/i;
+
+/** Drops the column header of an exported CSV (e.g. `Prénom,GamerTag`), keeping the racer lines. */
+export const dropCsvHeader = (text: string): string => {
+  const lines = text.split(/\r?\n/);
+  return HEADER_WORDS.test(lines[0] ?? '') ? lines.slice(1).join('\n') : text;
 };
 
 /**

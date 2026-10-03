@@ -4,7 +4,7 @@ Run an office Mario Kart tournament from a laptop: register racers, play the cha
 
 ## Format
 
-1. **Registration**: 4 to 50 racers. Paste a whole list at once (`First name, Gamer tag` per line); the gamer tag is optional.
+1. **Registration**: 4 to 50 racers. Paste a whole list at once (`First name, Gamer tag` per line) or import a CSV file; the gamer tag is optional.
 2. **Championship**: everyone races 3 times in Grands Prix of 3 or 4 players. The schedule avoids back-to-back races, spreads each racer's races evenly and limits repeated opponents.
 3. **Semi-finals** (8+ racers): the top 8 are seeded into two balanced sessions (A: seeds 1, 3, 6, 8 · B: seeds 2, 4, 5, 7), 2 GPs each. The top 2 of each session are pre-selected for the final; the organizer can swap them after a tie-breaker.
    With fewer than 8 racers, the top 4 go straight to the final.
